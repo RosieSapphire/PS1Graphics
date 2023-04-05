@@ -20,13 +20,22 @@ struct vertex {
 	rm_vec3f norm;
 };
 
-struct vertex vertices[6] = {
+struct vertex obj_verts[6] = {
 	{{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
 	{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
 	{{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
 	{{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
 	{{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
 	{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+};
+
+rm_vec4f fbo_verts[6] = {
+	{-1.0f, -1.0f, 0.0f, 0.0f},
+	{ 1.0f, -1.0f, 1.0f, 0.0f},
+	{-1.0f,  1.0f, 0.0f, 1.0f},
+	{ 1.0f,  1.0f, 1.0f, 1.0f},
+	{-1.0f,  1.0f, 0.0f, 1.0f},
+	{ 1.0f, -1.0f, 1.0f, 0.0f},
 };
 
 char *file_read_text(const char *path);
@@ -54,15 +63,15 @@ int main(void)
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	GLuint vao, vbo;
+	GLuint obj_vao, obj_vbo;
 
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glGenVertexArrays(1, &obj_vao);
+	glBindVertexArray(obj_vao);
+	glGenBuffers(1, &obj_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, obj_vbo);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),
-			vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(obj_verts),
+			obj_verts, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -76,16 +85,29 @@ int main(void)
 			sizeof(struct vertex),
 			(void *)offsetof(struct vertex, norm));
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	GLuint fbo_vao, fbo_vbo;
 
-	GLuint shader = shader_create("shaders/base.vert", "shaders/base.frag");
+	glGenVertexArrays(1, &fbo_vao);
+	glBindVertexArray(fbo_vao);
+	glGenBuffers(1, &fbo_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, fbo_vbo);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(fbo_verts),
+			fbo_verts, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
+			sizeof(rm_vec4f), NULL);
+
+	GLuint obj_shader =
+		shader_create("shaders/base.vert", "shaders/base.frag");
+	GLuint fbo_shader =
+		shader_create("shaders/fbo.vert", "shaders/fbo.frag");
 	GLuint texture = texture_load("textures/test.png");
 
-	int projection_loc = glGetUniformLocation(shader, "u_projection");
-	int view_loc = glGetUniformLocation(shader, "u_view");
-	int view_pos_loc = glGetUniformLocation(shader, "u_view_pos");
-	int model_loc = glGetUniformLocation(shader, "u_model");
+	int projection_loc = glGetUniformLocation(obj_shader, "u_projection");
+	int view_loc = glGetUniformLocation(obj_shader, "u_view");
+	int view_pos_loc = glGetUniformLocation(obj_shader, "u_view_pos");
+	int model_loc = glGetUniformLocation(obj_shader, "u_model");
 
 	rm_mat4 projection;
 	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
@@ -95,6 +117,39 @@ int main(void)
 	rm_mat4_perspective(90.0f, ASPECT_RATIO, 0.1f, 3.0f, projection);
 	rm_mat4_translate(view, view_pos);
 
+	GLuint fbo;
+
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	GLuint fbo_tex;
+
+	glGenTextures(1, &fbo_tex);
+	glBindTexture(GL_TEXTURE_2D, fbo_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB,
+			GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, fbo_tex, 0);
+
+	GLuint rbo;
+
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER,
+			GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+			GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER)
+			!= GL_FRAMEBUFFER_COMPLETE) {
+		printf("Failed to create framebuffer.\n");
+		return 1;
+	}
+
 	while(!glfwWindowShouldClose(window)) {
 		rm_vec3f move = {0.001f, 0.002f, 0.0f};
 
@@ -102,11 +157,14 @@ int main(void)
 		rm_mat4_rotate_x(model, 0.013f);
 		rm_mat4_rotate_z(model, 0.01f);
 
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glClearColor(0.05f, 0.1f, 0.2f, 1.0f);
+		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(shader);
+		glUseProgram(obj_shader);
 		glUniformMatrix4fv(model_loc, 1, GL_FALSE,
 				(const float *)model);
 		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
@@ -114,17 +172,26 @@ int main(void)
 		glUniform3fv(view_pos_loc, 1, (const float *)view_pos);
 		glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
 				(const float *)projection);
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, (sizeof(vertices) >> 2));
-		glBindVertexArray(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindVertexArray(obj_vao);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		glfwPollEvents();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDisable(GL_DEPTH_TEST);
+		glUseProgram(fbo_shader);
+		glBindVertexArray(fbo_vao);
+		glBindTexture(GL_TEXTURE_2D, fbo_tex);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
-	glDeleteProgram(shader);
+	glDeleteProgram(fbo_shader);
+	glDeleteProgram(obj_shader);
+	glDeleteVertexArrays(1, &obj_vao);
+	glDeleteBuffers(1, &obj_vbo);
 	glDeleteTextures(1, &texture);
+	glDeleteFramebuffers(1, &fbo);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
@@ -219,7 +286,6 @@ GLuint texture_load(const char *path)
 		return 0;
 	}
 
-	glActiveTexture(GL_TEXTURE0);
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
