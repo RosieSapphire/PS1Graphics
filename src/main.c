@@ -10,8 +10,8 @@
 #include "rmath/vec2f.h"
 #include "rmath/mat4.h"
 
-#define WIDTH 1024
-#define HEIGHT 768
+#define WIDTH 640
+#define HEIGHT 480
 #define ASPECT_RATIO ((float)WIDTH / (float)HEIGHT)
 
 struct vertex {
@@ -109,6 +109,9 @@ int main(void)
 	int view_pos_loc = glGetUniformLocation(obj_shader, "u_view_pos");
 	int model_loc = glGetUniformLocation(obj_shader, "u_model");
 
+	int width_loc = glGetUniformLocation(fbo_shader, "u_width");
+	int height_loc = glGetUniformLocation(fbo_shader, "u_height");
+
 	rm_mat4 projection;
 	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
 	rm_vec3f view_pos = {0.0f, 0.0f, -2.0f};
@@ -178,6 +181,8 @@ int main(void)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDisable(GL_DEPTH_TEST);
 		glUseProgram(fbo_shader);
+		glUniform1i(width_loc, WIDTH);
+		glUniform1i(height_loc, HEIGHT);
 		glBindVertexArray(fbo_vao);
 		glBindTexture(GL_TEXTURE_2D, fbo_tex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
