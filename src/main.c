@@ -114,7 +114,7 @@ int main(void)
 	rm_vec3f view_pos = {0.0f, 0.0f, -2.0f};
 	rm_mat4 model = RM_MAT4_IDENTITY_INIT;
 
-	rm_mat4_perspective(90.0f, ASPECT_RATIO, 0.1f, 3.0f, projection);
+	rm_mat4_perspective(50.0f, ASPECT_RATIO, 0.1f, 3.0f, projection);
 	rm_mat4_translate(view, view_pos);
 
 	GLuint fbo;
@@ -151,11 +151,11 @@ int main(void)
 	}
 
 	while(!glfwWindowShouldClose(window)) {
-		rm_vec3f move = {0.001f, 0.002f, 0.0f};
+		const float time = glfwGetTime();
 
-		rm_mat4_translate(model, move);
-		rm_mat4_rotate_x(model, 0.013f);
-		rm_mat4_rotate_z(model, 0.01f);
+		rm_mat4_identity(model);
+		rm_mat4_rotate_x(model, 1.3f * time);
+		rm_mat4_rotate_z(model, 1.0f * time);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glClearColor(0.05f, 0.1f, 0.2f, 1.0f);

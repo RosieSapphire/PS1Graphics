@@ -15,9 +15,6 @@ const int bayer[4 * 4] = int[] (
 
 void main()
 {
-	// const float uv_size = 255;
-	// vec2 uv_low = vec2(ivec2(o_uv * uv_size)) / uv_size;
-
 	const float bit_depth = 8 - 1;
 	vec3 tex = texture(u_tex, o_uv).xyz;
 	vec3 tex_low = vec3(ivec3(tex * bit_depth)) / bit_depth;
