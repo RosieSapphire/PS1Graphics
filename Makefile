@@ -9,11 +9,16 @@ BIN=ps1_graphics
 default: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@ $(INC) $(LIB)
-	rm -f *.o
+	@echo Linking "'"$(BIN)"'"executable...
+	@$(CC) $(CFLAGS) $^ -o $@ $(INC) $(LIB)
+	@echo Deleting object files...
+	@rm -f *.o
+	@echo Success!
 
 %.o: src/%.c
-	$(CC) $(CFLAGS) -c $^ $(INC)
+	@echo Compiling "'"$^"'"...
+	@$(CC) $(CFLAGS) -c $^ $(INC)
 
 clean:
-	rm -f $(BIN)
+	@rm -f $(BIN) $(OBJ)
+	@echo Cleaned up build files.
