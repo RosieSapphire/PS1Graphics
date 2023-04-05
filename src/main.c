@@ -103,7 +103,7 @@ int main(void)
 		shader_create("shaders/base.vert", "shaders/base.frag");
 	GLuint fbo_shader =
 		shader_create("shaders/fbo.vert", "shaders/fbo.frag");
-	GLuint texture = texture_load("textures/test.png");
+	GLuint texture = texture_load("textures/test2.png");
 
 	int projection_loc = glGetUniformLocation(obj_shader, "u_projection");
 	int view_loc = glGetUniformLocation(obj_shader, "u_view");
