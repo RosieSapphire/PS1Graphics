@@ -10,8 +10,10 @@
 #include "rmath/vec2f.h"
 #include "rmath/mat4.h"
 
-#define WIDTH 640
-#define HEIGHT 480
+#define WIDTH 1024
+#define HEIGHT 768
+#define T_WIDTH (WIDTH >> 2)
+#define T_HEIGHT (HEIGHT >> 2)
 #define ASPECT_RATIO ((float)WIDTH / (float)HEIGHT)
 
 struct vertex {
@@ -56,7 +58,6 @@ int main(void)
 
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
-	glViewport(0, 0, WIDTH, HEIGHT);
 	glEnable(GL_DEPTH);
 	glDepthFunc(GL_LESS);
 	glDisable(GL_CULL_FACE);
@@ -129,7 +130,7 @@ int main(void)
 
 	glGenTextures(1, &fbo_tex);
 	glBindTexture(GL_TEXTURE_2D, fbo_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, T_WIDTH, T_HEIGHT, 0, GL_RGB,
 			GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -143,7 +144,7 @@ int main(void)
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 	glRenderbufferStorage(GL_RENDERBUFFER,
-			GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
+			GL_DEPTH24_STENCIL8, T_WIDTH, T_HEIGHT);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER,
 			GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
@@ -153,14 +154,23 @@ int main(void)
 		return 1;
 	}
 
-	while(!glfwWindowShouldClose(window)) {
-		const float time = glfwGetTime();
+	float time_last = glfwGetTime();
 
-		rm_mat4_identity(model);
-		rm_mat4_rotate_x(model, 1.3f * time);
-		rm_mat4_rotate_z(model, 1.0f * time);
+	while(!glfwWindowShouldClose(window)) {
+		float time_now, time_delta;
+
+		do {
+			time_now = glfwGetTime();
+			time_delta = time_now - time_last;
+		} while(time_delta < 1.0f / 30.0f);
+
+		time_last = time_now;
+
+		rm_mat4_rotate_x(model, 1.3f * time_delta);
+		rm_mat4_rotate_z(model, 1.0f * time_delta);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glViewport(0, 0, T_WIDTH, T_HEIGHT);
 		glClearColor(0.05f, 0.1f, 0.2f, 1.0f);
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -178,11 +188,16 @@ int main(void)
 		glBindVertexArray(obj_vao);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glViewport(0, 0, WIDTH, HEIGHT);
+		glBlitFramebuffer(0, 0, WIDTH, HEIGHT, 0, 0,
+				T_WIDTH, T_HEIGHT, GL_COLOR_BUFFER_BIT,
+				GL_NEAREST);
 		glDisable(GL_DEPTH_TEST);
 		glUseProgram(fbo_shader);
-		glUniform1i(width_loc, WIDTH);
-		glUniform1i(height_loc, HEIGHT);
+		glUniform1i(width_loc, T_WIDTH);
+		glUniform1i(height_loc, T_HEIGHT);
 		glBindVertexArray(fbo_vao);
 		glBindTexture(GL_TEXTURE_2D, fbo_tex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -21,10 +21,10 @@ void main()
 	int bayer_index = (pixel.y % 4) * 4 + (pixel.x % 4);
 	float bayer_value = (float(bayer[bayer_index]) / 16.0) - 0.5;
 
-	const float bit_depth = 7;
-	const float spread = 0.5;
+	const float bit_depth = 31;
+	const float spread = 0.1;
 	vec3 tex = texture(u_tex, o_uv).xyz;
-	tex += bayer_value * spread;
+	// tex += bayer_value * spread;
 	vec3 tex_low = vec3(ivec3(tex * bit_depth)) / bit_depth;
 
 	frag_color = vec4(tex_low, 1.0);
