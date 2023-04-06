@@ -9,12 +9,13 @@ uniform mat4 u_view;
 uniform mat4 u_model;
 
 out vec2 o_uv;
-out vec3 o_frag_pos;
 
 void main()
 {
 	mat4 mvp = u_projection * u_view * u_model;
+	const float jitter = 64.0;
+
 	gl_Position = mvp * vec4(a_pos, 1.0);
+	gl_Position.xy = floor(gl_Position.xy * jitter) / jitter;
 	o_uv = a_uv;
-	o_frag_pos = vec3(u_model * vec4(a_pos, 1.0));
 }

@@ -133,10 +133,10 @@ int main(void)
 
 	rm_mat4 projection;
 	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
-	rm_vec3f view_pos = {0.0f, 0.0f, -2.0f};
+	rm_vec3f view_pos = {0, 0, -2};
 	rm_mat4 model = RM_MAT4_IDENTITY_INIT;
 
-	rm_mat4_perspective(50.0f, ASPECT_RATIO, 0.1f, 3.0f, projection);
+	rm_mat4_perspective(50.0f, ASPECT_RATIO, 1, 50, projection);
 	rm_mat4_translate(view, view_pos);
 
 	GLuint fbo;

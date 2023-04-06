@@ -1,7 +1,6 @@
 #version 330 core
 
 in vec2 o_uv;
-in vec3 o_frag_pos;
 
 uniform sampler2D u_tex;
 uniform vec3 u_view_pos;
