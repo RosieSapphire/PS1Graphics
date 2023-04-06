@@ -16,7 +16,7 @@ out vec3 o_light_col;
 void main()
 {
 	mat4 mvp = u_projection * u_view * u_model;
-	const float jitter = 48.0;
+	const float jitter = 64.0;
 	vec4 vertex_pos = vec4(a_pos, 1.0);
 
 	gl_Position = mvp * vertex_pos;
