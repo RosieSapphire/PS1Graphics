@@ -12,10 +12,11 @@ out vec2 o_uv;
 
 void main()
 {
-	mat4 mvp = u_projection * u_view * u_model;
-	const float jitter = 64.0;
+	mat4 mv = u_view * u_model;
+	const float jitter = 48.0;
 
-	gl_Position = mvp * vec4(a_pos, 1.0);
+	gl_Position = u_projection * mv * vec4(a_pos, 1.0);
 	gl_Position.xy = floor(gl_Position.xy * jitter) / jitter;
+	gl_Position /= gl_Position.w;
 	o_uv = a_uv;
 }
