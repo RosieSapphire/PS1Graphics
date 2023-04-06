@@ -12,6 +12,7 @@
 
 #define WIDTH 1024
 #define HEIGHT 768
+#define TARGET_FRAMERATE 30.0f
 #define T_WIDTH (WIDTH >> 2)
 #define T_HEIGHT (HEIGHT >> 2)
 #define ASPECT_RATIO ((float)WIDTH / (float)HEIGHT)
@@ -180,7 +181,6 @@ int main(void)
 	rm_mat4 projection;
 	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
 	rm_vec3f view_pos = {0, -1, -2};
-	rm_mat4 model = RM_MAT4_IDENTITY_INIT;
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
 	rm_mat4_look_at(view_pos, RM_VEC3F_ZERO, view);
@@ -219,18 +219,21 @@ int main(void)
 	}
 
 	float time_last = glfwGetTime();
+	float rotation = 0.0f;
 
 	while(!glfwWindowShouldClose(window)) {
 		float time_now, time_delta;
+		rm_mat4 model = RM_MAT4_IDENTITY_INIT;
 
 		do {
 			time_now = glfwGetTime();
 			time_delta = time_now - time_last;
-		} while(time_delta < 1.0f / 30.0f);
+		} while(time_delta < 1.0f / TARGET_FRAMERATE);
 
 		time_last = time_now;
 
-		rm_mat4_rotate_y(model, time_delta);
+		rotation += time_delta;
+		rm_mat4_rotate_y(model, rotation);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, T_WIDTH, T_HEIGHT);
