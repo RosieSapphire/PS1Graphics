@@ -167,7 +167,7 @@ int main(void)
 		shader_create("shaders/base.vert", "shaders/base.frag");
 	GLuint fbo_shader =
 		shader_create("shaders/fbo.vert", "shaders/fbo.frag");
-	GLuint texture = texture_load("textures/test.png");
+	GLuint texture = texture_load("textures/test3.png");
 
 	int projection_loc = glGetUniformLocation(obj_shader, "u_projection");
 	int view_loc = glGetUniformLocation(obj_shader, "u_view");
@@ -179,11 +179,11 @@ int main(void)
 
 	rm_mat4 projection;
 	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
-	rm_vec3f view_pos = {0, 0, -2};
+	rm_vec3f view_pos = {0, -1, -2};
 	rm_mat4 model = RM_MAT4_IDENTITY_INIT;
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
-	rm_mat4_translate(view, view_pos);
+	rm_mat4_look_at(view_pos, RM_VEC3F_ZERO, view);
 
 	GLuint fbo;
 
@@ -230,9 +230,7 @@ int main(void)
 
 		time_last = time_now;
 
-		rm_mat4_rotate_z(model, 1.0f * time_delta);
-		rm_mat4_rotate_x(model, 0.25f * time_delta);
-		rm_mat4_rotate_y(model, 0.5f * time_delta);
+		rm_mat4_rotate_y(model, time_delta);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, T_WIDTH, T_HEIGHT);
