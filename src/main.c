@@ -22,16 +22,62 @@ struct vertex {
 	rm_vec3f norm;
 };
 
-struct vertex obj_verts[4] = {
-	{{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-	{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-	{{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
-	{{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+struct vertex obj_verts[] = {
+	/* front */
+	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+
+	/* left */
+	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+
+	/* right */
+	{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+
+	/* back */
+	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+
+	/* bottom */
+	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+
+	/* top */
+	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
 };
 
-GLuint obj_indis[6] = {
+GLuint obj_indis[] = {
 	0, 1, 2,
-	2, 1, 3
+	2, 1, 3,
+
+	4, 5, 6,
+	6, 5, 7,
+
+	8, 9, 10,
+	10, 9, 11,
+
+	12, 13, 14,
+	14, 13, 15,
+
+	16, 17, 18,
+	18, 17, 19,
+
+	20, 21, 22,
+	22, 21, 23,
 };
 
 rm_vec4f fbo_verts[4] = {
@@ -66,7 +112,7 @@ int main(void)
 	gladLoadGL(glfwGetProcAddress);
 	glEnable(GL_DEPTH);
 	glDepthFunc(GL_LESS);
-	glDisable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
@@ -136,7 +182,7 @@ int main(void)
 	rm_vec3f view_pos = {0, 0, -2};
 	rm_mat4 model = RM_MAT4_IDENTITY_INIT;
 
-	rm_mat4_perspective(50.0f, ASPECT_RATIO, 1, 50, projection);
+	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
 	rm_mat4_translate(view, view_pos);
 
 	GLuint fbo;
@@ -184,8 +230,8 @@ int main(void)
 
 		time_last = time_now;
 
-		rm_mat4_rotate_x(model, 1.3f * time_delta);
 		rm_mat4_rotate_z(model, 1.0f * time_delta);
+		rm_mat4_rotate_x(model, 1.0f * time_delta);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, T_WIDTH, T_HEIGHT);
@@ -204,7 +250,6 @@ int main(void)
 		glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
 				(const float *)projection);
 		glBindVertexArray(obj_vao);
-		glDisable(GL_CULL_FACE);
 		glDrawElements(GL_TRIANGLES,
 				sizeof(obj_indis) / sizeof(*obj_indis),
 				GL_UNSIGNED_INT, obj_indis);
@@ -221,7 +266,6 @@ int main(void)
 		glUniform1i(height_loc, T_HEIGHT);
 		glBindVertexArray(fbo_vao);
 		glBindTexture(GL_TEXTURE_2D, fbo_tex);
-		glEnable(GL_CULL_FACE);
 		glDrawElements(GL_TRIANGLES,
 				sizeof(fbo_indis) / sizeof(*fbo_indis),
 				GL_UNSIGNED_INT, fbo_indis);
