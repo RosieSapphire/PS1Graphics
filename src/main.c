@@ -22,22 +22,28 @@ struct vertex {
 	rm_vec3f norm;
 };
 
-struct vertex obj_verts[6] = {
+struct vertex obj_verts[4] = {
 	{{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
 	{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
 	{{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
 	{{ 0.5f,  0.5f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
-	{{-0.5f,  0.5f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
-	{{ 0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
 };
 
-rm_vec4f fbo_verts[6] = {
+GLuint obj_indis[6] = {
+	0, 1, 2,
+	2, 1, 3
+};
+
+rm_vec4f fbo_verts[4] = {
 	{-1.0f, -1.0f, 0.0f, 0.0f},
 	{ 1.0f, -1.0f, 1.0f, 0.0f},
 	{-1.0f,  1.0f, 0.0f, 1.0f},
 	{ 1.0f,  1.0f, 1.0f, 1.0f},
-	{-1.0f,  1.0f, 0.0f, 1.0f},
-	{ 1.0f, -1.0f, 1.0f, 0.0f},
+};
+
+GLuint fbo_indis[6] = {
+	0, 1, 2,
+	2, 1, 3
 };
 
 char *file_read_text(const char *path);
@@ -64,7 +70,7 @@ int main(void)
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	GLuint obj_vao, obj_vbo;
+	GLuint obj_vao, obj_vbo, obj_ebo;
 
 	glGenVertexArrays(1, &obj_vao);
 	glBindVertexArray(obj_vao);
@@ -86,7 +92,13 @@ int main(void)
 			sizeof(struct vertex),
 			(void *)offsetof(struct vertex, norm));
 
-	GLuint fbo_vao, fbo_vbo;
+	glGenBuffers(1, &obj_ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj_ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(obj_indis),
+			obj_indis, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	GLuint fbo_vao, fbo_vbo, fbo_ebo;
 
 	glGenVertexArrays(1, &fbo_vao);
 	glBindVertexArray(fbo_vao);
@@ -99,11 +111,17 @@ int main(void)
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
 			sizeof(rm_vec4f), NULL);
 
+	glGenBuffers(1, &fbo_ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fbo_ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(fbo_indis),
+			fbo_indis, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	GLuint obj_shader =
 		shader_create("shaders/base.vert", "shaders/base.frag");
 	GLuint fbo_shader =
 		shader_create("shaders/fbo.vert", "shaders/fbo.frag");
-	GLuint texture = texture_load("textures/test2.png");
+	GLuint texture = texture_load("textures/test.png");
 
 	int projection_loc = glGetUniformLocation(obj_shader, "u_projection");
 	int view_loc = glGetUniformLocation(obj_shader, "u_view");
@@ -186,7 +204,10 @@ int main(void)
 		glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
 				(const float *)projection);
 		glBindVertexArray(obj_vao);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDisable(GL_CULL_FACE);
+		glDrawElements(GL_TRIANGLES,
+				sizeof(obj_indis) / sizeof(*obj_indis),
+				GL_UNSIGNED_INT, obj_indis);
 
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -200,7 +221,10 @@ int main(void)
 		glUniform1i(height_loc, T_HEIGHT);
 		glBindVertexArray(fbo_vao);
 		glBindTexture(GL_TEXTURE_2D, fbo_tex);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glEnable(GL_CULL_FACE);
+		glDrawElements(GL_TRIANGLES,
+				sizeof(fbo_indis) / sizeof(*fbo_indis),
+				GL_UNSIGNED_INT, fbo_indis);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
