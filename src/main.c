@@ -36,6 +36,7 @@ GLuint shader_compile(const char *path, int type);
 GLuint shader_create(const char *vert_path, const char *frag_path);
 GLFWwindow *window_create_centered(int width, int height, const char *title);
 GLuint texture_load(const char *path);
+GLuint texture_create_empty(void);
 
 int main(void)
 {
@@ -94,25 +95,12 @@ int main(void)
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
 	rm_mat4_look_at(view_pos, RM_VEC3F_ZERO, view);
 
-	GLuint fbo;
+	GLuint fbo, rbo, fbo_tex = texture_create_empty();
 
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-	GLuint fbo_tex;
-
-	glGenTextures(1, &fbo_tex);
-	glBindTexture(GL_TEXTURE_2D, fbo_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, T_WIDTH, T_HEIGHT, 0, GL_RGB,
-			GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 			GL_TEXTURE_2D, fbo_tex, 0);
-
-	GLuint rbo;
 
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -295,4 +283,20 @@ GLuint texture_load(const char *path)
 	stbi_image_free(data);
 
 	return id;
+}
+
+GLuint texture_create_empty(void)
+{
+	GLuint tex;
+
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, T_WIDTH, T_HEIGHT, 0, GL_RGB,
+			GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	return tex;
 }
