@@ -10,76 +10,14 @@
 #include "rmath/vec2f.h"
 #include "rmath/mat4.h"
 
+#include "mesh.h"
+
 #define WIDTH 1024
 #define HEIGHT 768
 #define TARGET_FRAMERATE 30.0f
 #define T_WIDTH (WIDTH >> 2)
 #define T_HEIGHT (HEIGHT >> 2)
 #define ASPECT_RATIO ((float)WIDTH / (float)HEIGHT)
-
-struct vertex {
-	rm_vec3f pos;
-	rm_vec2f uv;
-	rm_vec3f norm;
-};
-
-struct vertex obj_verts[] = {
-	/* front */
-	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, { 0.0f,  0.0f,  1.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, { 0.0f,  0.0f,  1.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, { 0.0f,  0.0f,  1.0f}},
-	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, { 0.0f,  0.0f,  1.0f}},
-
-	/* left */
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {-1.0f,  0.0f,  0.0f}},
-	{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, {-1.0f,  0.0f,  0.0f}},
-	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, {-1.0f,  0.0f,  0.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, {-1.0f,  0.0f,  0.0f}},
-
-	/* right */
-	{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, { 1.0f,  0.0f,  0.0f}},
-	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, { 1.0f,  0.0f,  0.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, { 1.0f,  0.0f,  0.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, { 1.0f,  0.0f,  0.0f}},
-
-	/* back */
-	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, { 0.0f,  0.0f, -1.0f}},
-	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, { 0.0f,  0.0f, -1.0f}},
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, { 0.0f,  0.0f, -1.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, { 0.0f,  0.0f, -1.0f}},
-
-	/* bottom */
-	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, { 0.0f, -1.0f,  0.0f}},
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, { 0.0f, -1.0f,  0.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, { 0.0f, -1.0f,  0.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f}, { 0.0f, -1.0f,  0.0f}},
-
-	/* top */
-	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}, { 0.0f,  1.0f,  0.0f}},
-	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, { 0.0f,  1.0f,  0.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}, { 0.0f,  1.0f,  0.0f}},
-	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, { 0.0f,  1.0f,  0.0f}},
-};
-
-GLuint obj_indis[] = {
-	0, 1, 2,
-	2, 1, 3,
-
-	4, 5, 6,
-	6, 5, 7,
-
-	8, 9, 10,
-	10, 9, 11,
-
-	12, 13, 14,
-	14, 13, 15,
-
-	16, 17, 18,
-	18, 17, 19,
-
-	20, 21, 22,
-	22, 21, 23,
-};
 
 rm_vec4f fbo_verts[4] = {
 	{-1.0f, -1.0f, 0.0f, 0.0f},
@@ -117,34 +55,6 @@ int main(void)
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	GLuint obj_vao, obj_vbo, obj_ebo;
-
-	glGenVertexArrays(1, &obj_vao);
-	glBindVertexArray(obj_vao);
-	glGenBuffers(1, &obj_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, obj_vbo);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(obj_verts),
-			obj_verts, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-			sizeof(struct vertex),
-			(void *)offsetof(struct vertex, pos));
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
-			sizeof(struct vertex),
-			(void *)offsetof(struct vertex, uv));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
-			sizeof(struct vertex),
-			(void *)offsetof(struct vertex, norm));
-
-	glGenBuffers(1, &obj_ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj_ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(obj_indis),
-			obj_indis, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 	GLuint fbo_vao, fbo_vbo, fbo_ebo;
 
 	glGenVertexArrays(1, &fbo_vao);
@@ -164,16 +74,15 @@ int main(void)
 			fbo_indis, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	GLuint obj_shader =
+	GLuint cube_shader =
 		shader_create("shaders/base.vert", "shaders/base.frag");
 	GLuint fbo_shader =
 		shader_create("shaders/fbo.vert", "shaders/fbo.frag");
-	GLuint texture = texture_load("textures/test3.png");
 
-	int projection_loc = glGetUniformLocation(obj_shader, "u_projection");
-	int view_loc = glGetUniformLocation(obj_shader, "u_view");
-	int view_pos_loc = glGetUniformLocation(obj_shader, "u_view_pos");
-	int model_loc = glGetUniformLocation(obj_shader, "u_model");
+	int projection_loc = glGetUniformLocation(cube_shader, "u_projection");
+	int view_loc = glGetUniformLocation(cube_shader, "u_view");
+	int view_pos_loc = glGetUniformLocation(cube_shader, "u_view_pos");
+	int model_loc = glGetUniformLocation(cube_shader, "u_model");
 
 	int width_loc = glGetUniformLocation(fbo_shader, "u_width");
 	int height_loc = glGetUniformLocation(fbo_shader, "u_height");
@@ -218,6 +127,9 @@ int main(void)
 		return 1;
 	}
 
+	struct mesh *cube_mesh = mesh_create_cube();
+	GLuint crate_texture = texture_load("textures/test3.png");
+
 	float time_last = glfwGetTime();
 	float rotation = 0.0f;
 
@@ -241,9 +153,7 @@ int main(void)
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glUseProgram(obj_shader);
+		glUseProgram(cube_shader);
 		glUniformMatrix4fv(model_loc, 1, GL_FALSE,
 				(const float *)model);
 		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
@@ -251,10 +161,8 @@ int main(void)
 		glUniform3fv(view_pos_loc, 1, (const float *)view_pos);
 		glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
 				(const float *)projection);
-		glBindVertexArray(obj_vao);
-		glDrawElements(GL_TRIANGLES,
-				sizeof(obj_indis) / sizeof(*obj_indis),
-				GL_UNSIGNED_INT, obj_indis);
+
+		mesh_draw(cube_mesh, crate_texture);
 
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -277,10 +185,9 @@ int main(void)
 	}
 
 	glDeleteProgram(fbo_shader);
-	glDeleteProgram(obj_shader);
-	glDeleteVertexArrays(1, &obj_vao);
-	glDeleteBuffers(1, &obj_vbo);
-	glDeleteTextures(1, &texture);
+	glDeleteProgram(cube_shader);
+	glDeleteTextures(1, &crate_texture);
+	mesh_destroy(cube_mesh);
 	glDeleteFramebuffers(1, &fbo);
 	glfwDestroyWindow(window);
 	glfwTerminate();
