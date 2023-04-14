@@ -3,13 +3,11 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "rmath/vec3f.h"
 #include "rmath/vec2f.h"
 #include "rmath/mat4.h"
 
+#include "texture.h"
 #include "mesh.h"
 
 #define WIDTH 1024
@@ -35,8 +33,6 @@ char *file_read_text(const char *path);
 GLuint shader_compile(const char *path, int type);
 GLuint shader_create(const char *vert_path, const char *frag_path);
 GLFWwindow *window_create_centered(int width, int height, const char *title);
-GLuint texture_load(const char *path);
-GLuint texture_create_empty(void);
 
 int main(void)
 {
@@ -95,7 +91,7 @@ int main(void)
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
 	rm_mat4_look_at(view_pos, RM_VEC3F_ZERO, view);
 
-	GLuint fbo, rbo, fbo_tex = texture_create_empty();
+	GLuint fbo, rbo, fbo_tex = texture_create_empty(T_WIDTH, T_HEIGHT);
 
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -255,48 +251,4 @@ GLFWwindow *window_create_centered(int width, int height, const char *title)
 	glfwSetWindowPos(window, window_x, window_y);
 
 	return window;
-}
-
-GLuint texture_load(const char *path)
-{
-	GLuint id;
-	int width, height, comp;
-
-	stbi_set_flip_vertically_on_load(1);
-
-	uint8_t *data = stbi_load(path, &width, &height, &comp, 0);
-
-	if(!data) {
-		printf("Failed to load texture from '%s'\n", path);
-		return 0;
-	}
-
-	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-			GL_UNSIGNED_BYTE, data);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	stbi_image_free(data);
-
-	return id;
-}
-
-GLuint texture_create_empty(void)
-{
-	GLuint tex;
-
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, T_WIDTH, T_HEIGHT, 0, GL_RGB,
-			GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	return tex;
 }
