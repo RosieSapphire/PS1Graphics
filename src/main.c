@@ -46,13 +46,13 @@ int main(void)
 	GLuint fbo_shader =
 		shader_create("shaders/fbo.vert", "shaders/fbo.frag");
 
-	int projection_loc = glGetUniformLocation(cube_shader, "u_projection");
-	int view_loc = glGetUniformLocation(cube_shader, "u_view");
-	int view_pos_loc = glGetUniformLocation(cube_shader, "u_view_pos");
-	int model_loc = glGetUniformLocation(cube_shader, "u_model");
+	int projection_loc = shader_get_loc(cube_shader, "u_projection");
+	int view_loc = shader_get_loc(cube_shader, "u_view");
+	int view_pos_loc = shader_get_loc(cube_shader, "u_view_pos");
+	int model_loc = shader_get_loc(cube_shader, "u_model");
 
-	int width_loc = glGetUniformLocation(fbo_shader, "u_width");
-	int height_loc = glGetUniformLocation(fbo_shader, "u_height");
+	int width_loc = shader_get_loc(fbo_shader, "u_width");
+	int height_loc = shader_get_loc(fbo_shader, "u_height");
 
 	rm_mat4 projection;
 	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
@@ -83,17 +83,16 @@ int main(void)
 
 		render_layer_bind_and_clear(layer, 0.05f, 0.1f, 0.2f, 1.0f);
 
-		glUseProgram(cube_shader);
-		glUniformMatrix4fv(model_loc, 1, GL_FALSE, (float *)model);
-		glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float *)view);
-		glUniform3fv(view_pos_loc, 1, (const float *)view_pos);
-		glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
-				(float *)projection);
+		shader_bind(cube_shader);
+		shader_uni_mat4(model_loc, model);
+		shader_uni_mat4(view_loc, view);
+		shader_uni_mat4(projection_loc, projection);
+		shader_uni_vec3f(view_pos_loc, view_pos);
 		mesh_draw(cube_mesh, crate_texture);
 
-		glUseProgram(fbo_shader);
-		glUniform1i(width_loc, T_WIDTH);
-		glUniform1i(height_loc, T_HEIGHT);
+		shader_bind(fbo_shader);
+		shader_uni_int(width_loc, T_WIDTH);
+		shader_uni_int(height_loc, T_WIDTH); //
 		render_layer_draw(layer, WIDTH, HEIGHT);
 
 		glfwSwapBuffers(window);

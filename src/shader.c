@@ -57,3 +57,28 @@ GLuint shader_create(const char *vert_path, const char *frag_path)
 
 	return program;
 }
+
+GLuint shader_get_loc(unsigned int s, const char *loc)
+{
+	return glGetUniformLocation(s, loc);
+}
+
+void shader_bind(unsigned int s)
+{
+	glUseProgram(s);
+}
+
+void shader_uni_mat4(unsigned int loc, rm_mat4 m4)
+{
+	glUniformMatrix4fv(loc, 1, GL_FALSE, (const float *)m4);
+}
+
+void shader_uni_vec3f(unsigned int loc, rm_vec3f v3f)
+{
+	glUniform3fv(loc, 1, (const float *)v3f);
+}
+
+void shader_uni_int(unsigned int loc, int i)
+{
+	glUniform1i(loc, i);
+}
