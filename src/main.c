@@ -1,9 +1,11 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 
 #include "render_layer.h"
 #include "shader.h"
 #include "texture.h"
+#include "camera.h"
 
 #define WIDTH 1024
 #define HEIGHT 768
@@ -48,11 +50,9 @@ int main(void)
 	int height_loc = shader_get_loc(fbo_shader, "u_height");
 
 	rm_mat4 projection;
-	rm_mat4 view = RM_MAT4_IDENTITY_INIT;
-	rm_vec3f view_pos = {0, -1, -2};
+	struct camera cam = {{0, -1, -2}, {0, 0, 0}};
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
-	rm_mat4_look_at(view_pos, RM_VEC3F_ZERO, view);
 
 	struct mesh *cube_mesh = mesh_create_type(MESH_CUBE);
 	GLuint crate_texture = texture_load("textures/test3.png");
@@ -63,12 +63,16 @@ int main(void)
 	while(!glfwWindowShouldClose(window)) {
 		float time_now, time_delta;
 		rm_mat4 model = RM_MAT4_IDENTITY_INIT;
+		rm_mat4 view;
+
+		camera_get_view_mat4(cam, view);
 
 		do {
 			time_now = glfwGetTime();
 			time_delta = time_now - time_last;
 		} while(time_delta < 1.0f / TARGET_FRAMERATE);
 
+		cam.eye_pos[1] = sinf(time_now);
 		time_last = time_now;
 
 		rotation += time_delta;
@@ -80,12 +84,12 @@ int main(void)
 		shader_uni_mat4(model_loc, model);
 		shader_uni_mat4(view_loc, view);
 		shader_uni_mat4(projection_loc, projection);
-		shader_uni_vec3f(view_pos_loc, view_pos);
+		shader_uni_vec3f(view_pos_loc, cam.eye_pos);
 		mesh_draw(cube_mesh, crate_texture);
 
 		shader_bind(fbo_shader);
 		shader_uni_int(width_loc, T_WIDTH);
-		shader_uni_int(height_loc, T_WIDTH); //
+		shader_uni_int(height_loc, T_HEIGHT);
 		render_layer_draw(layer, WIDTH, HEIGHT);
 
 		glfwSwapBuffers(window);
