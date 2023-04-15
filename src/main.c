@@ -1,16 +1,9 @@
-#include <stdio.h>
-#include <malloc.h>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include "rmath/vec3f.h"
-#include "rmath/vec2f.h"
-#include "rmath/mat4.h"
-
-#include "texture.h"
-#include "mesh.h"
 #include "render_layer.h"
 #include "shader.h"
+#include "texture.h"
 
 #define WIDTH 1024
 #define HEIGHT 768
