@@ -17,7 +17,13 @@ struct mesh {
 	unsigned int vao, vbo, ebo;
 };
 
-struct mesh *mesh_create_cube(void);
+enum mesh_type {
+	MESH_CUBE = 0,
+	MESH_QUAD,
+	MESH_TYPE_COUNT
+};
+
+struct mesh *mesh_create_type(enum mesh_type type);
 void mesh_draw(struct mesh *m, unsigned int texture);
 void mesh_destroy(struct mesh *m);
 

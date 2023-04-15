@@ -9,6 +9,7 @@
 
 #include "texture.h"
 #include "mesh.h"
+#include "render_layer.h"
 
 #define WIDTH 1024
 #define HEIGHT 768
@@ -16,18 +17,6 @@
 #define T_WIDTH (WIDTH >> 2)
 #define T_HEIGHT (HEIGHT >> 2)
 #define ASPECT_RATIO ((float)WIDTH / (float)HEIGHT)
-
-rm_vec4f fbo_verts[4] = {
-	{-1.0f, -1.0f, 0.0f, 0.0f},
-	{ 1.0f, -1.0f, 1.0f, 0.0f},
-	{-1.0f,  1.0f, 0.0f, 1.0f},
-	{ 1.0f,  1.0f, 1.0f, 1.0f},
-};
-
-GLuint fbo_indis[6] = {
-	0, 1, 2,
-	2, 1, 3
-};
 
 char *file_read_text(const char *path);
 GLuint shader_compile(const char *path, int type);
@@ -52,24 +41,7 @@ int main(void)
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
-	GLuint fbo_vao, fbo_vbo, fbo_ebo;
-
-	glGenVertexArrays(1, &fbo_vao);
-	glBindVertexArray(fbo_vao);
-	glGenBuffers(1, &fbo_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, fbo_vbo);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(fbo_verts),
-			fbo_verts, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE,
-			sizeof(rm_vec4f), NULL);
-
-	glGenBuffers(1, &fbo_ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fbo_ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(fbo_indis),
-			fbo_indis, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	struct render_layer *layer = render_layer_create(T_WIDTH, T_HEIGHT);
 
 	GLuint cube_shader =
 		shader_create("shaders/base.vert", "shaders/base.frag");
@@ -91,27 +63,7 @@ int main(void)
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
 	rm_mat4_look_at(view_pos, RM_VEC3F_ZERO, view);
 
-	GLuint fbo, rbo, fbo_tex = texture_create_empty(T_WIDTH, T_HEIGHT);
-
-	glGenFramebuffers(1, &fbo);
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, fbo_tex, 0);
-
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER,
-			GL_DEPTH24_STENCIL8, T_WIDTH, T_HEIGHT);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-			GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER)
-			!= GL_FRAMEBUFFER_COMPLETE) {
-		printf("Failed to create framebuffer.\n");
-		return 1;
-	}
-
-	struct mesh *cube_mesh = mesh_create_cube();
+	struct mesh *cube_mesh = mesh_create_type(MESH_CUBE);
 	GLuint crate_texture = texture_load("textures/test3.png");
 
 	float time_last = glfwGetTime();
@@ -131,38 +83,20 @@ int main(void)
 		rotation += time_delta;
 		rm_mat4_rotate_y(model, rotation);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glViewport(0, 0, T_WIDTH, T_HEIGHT);
-		glClearColor(0.05f, 0.1f, 0.2f, 1.0f);
-		glEnable(GL_DEPTH_TEST);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		render_layer_bind_and_clear(layer, 0.05f, 0.1f, 0.2f, 1.0f);
 
 		glUseProgram(cube_shader);
-		glUniformMatrix4fv(model_loc, 1, GL_FALSE,
-				(const float *)model);
-		glUniformMatrix4fv(view_loc, 1, GL_FALSE,
-				(const float *)view);
+		glUniformMatrix4fv(model_loc, 1, GL_FALSE, (float *)model);
+		glUniformMatrix4fv(view_loc, 1, GL_FALSE, (float *)view);
 		glUniform3fv(view_pos_loc, 1, (const float *)view_pos);
 		glUniformMatrix4fv(projection_loc, 1, GL_FALSE,
-				(const float *)projection);
-
+				(float *)projection);
 		mesh_draw(cube_mesh, crate_texture);
 
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glViewport(0, 0, WIDTH, HEIGHT);
-		glBlitFramebuffer(0, 0, WIDTH, HEIGHT, 0, 0,
-				T_WIDTH, T_HEIGHT, GL_COLOR_BUFFER_BIT,
-				GL_NEAREST);
-		glDisable(GL_DEPTH_TEST);
 		glUseProgram(fbo_shader);
 		glUniform1i(width_loc, T_WIDTH);
 		glUniform1i(height_loc, T_HEIGHT);
-		glBindVertexArray(fbo_vao);
-		glBindTexture(GL_TEXTURE_2D, fbo_tex);
-		glDrawElements(GL_TRIANGLES,
-				sizeof(fbo_indis) / sizeof(*fbo_indis),
-				GL_UNSIGNED_INT, fbo_indis);
+		render_layer_draw(layer, WIDTH, HEIGHT);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -172,7 +106,7 @@ int main(void)
 	glDeleteProgram(cube_shader);
 	glDeleteTextures(1, &crate_texture);
 	mesh_destroy(cube_mesh);
-	glDeleteFramebuffers(1, &fbo);
+	render_layer_destroy(layer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
