@@ -37,15 +37,26 @@ void camera_update_position(struct camera *c, GLFWwindow *win, float dt)
 	}
 
 	float turn_amount = (glfwGetKey(win, GLFW_KEY_D) -
-			glfwGetKey(win, GLFW_KEY_A)) * move_speed;
-	float v_move_amount = (glfwGetKey(win, GLFW_KEY_S) -
-			glfwGetKey(win, GLFW_KEY_W)) * move_speed;
+			glfwGetKey(win, GLFW_KEY_A)) * dt * 2;
+	float forward_move = (glfwGetKey(win, GLFW_KEY_S) -
+			glfwGetKey(win, GLFW_KEY_W));
+	float right_move = (glfwGetKey(win, GLFW_KEY_Q) -
+			glfwGetKey(win, GLFW_KEY_E));
 
-	rm_vec3f v_move_vec;
+	rm_vec3f forward_vec;
+	rm_vec3f right_vec;
+	rm_vec3f move_vec;
 
-	camera_get_look_dir(*c, v_move_vec);
-	rm_vec3f_scale(v_move_vec, v_move_amount);
-	rm_vec3f_add(c->eye_pos, v_move_vec, c->eye_pos);
+	camera_get_look_dir(*c, forward_vec);
+	rm_vec3f_cross(forward_vec, RM_VEC3F_Y, right_vec);
+
+	rm_vec3f_scale(forward_vec, forward_move);
+	rm_vec3f_scale(right_vec, right_move);
+
+	rm_vec3f_add(forward_vec, right_vec, move_vec);
+	rm_vec3f_normalize(move_vec);
+	rm_vec3f_scale(move_vec, move_speed);
+	rm_vec3f_add(c->eye_pos, move_vec, c->eye_pos);
 
 	c->yaw += turn_amount;
 }
