@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "render_layer.h"
+#include "rmath/vec3f.h"
 #include "shader.h"
 #include "texture.h"
 #include "camera.h"
@@ -50,9 +51,9 @@ int main(void)
 	int height_loc = shader_get_loc(fbo_shader, "u_height");
 
 	rm_mat4 projection;
-	struct camera cam = {{0, -1, -2}, {0, 0, 0}};
+	struct camera cam = {{0, 1, 2}, RM_PI * 0.5f, 0};
 
-	rm_mat4_perspective(70.0f, ASPECT_RATIO, 1, 50, projection);
+	rm_mat4_perspective(70.0f, ASPECT_RATIO, 0.1f, 50, projection);
 
 	struct mesh *cube_mesh = mesh_create_type(MESH_CUBE);
 	GLuint crate_texture = texture_load("textures/test3.png");
@@ -72,7 +73,8 @@ int main(void)
 			time_delta = time_now - time_last;
 		} while(time_delta < 1.0f / TARGET_FRAMERATE);
 
-		cam.eye_pos[1] = sinf(time_now);
+		camera_update_position(&cam, window, time_delta);
+
 		time_last = time_now;
 
 		rotation += time_delta;
@@ -85,6 +87,14 @@ int main(void)
 		shader_uni_mat4(view_loc, view);
 		shader_uni_mat4(projection_loc, projection);
 		shader_uni_vec3f(view_pos_loc, cam.eye_pos);
+
+		rm_vec3f cam_dir, obj_dir;
+
+		// camera_get_look_dir(cam, cam_dir);
+		// rm_vec3f_sub(RM_VEC3F_ZERO, cam.eye_pos, obj_dir);
+		// rm_vec3f_normalize(obj_dir);
+
+		printf("%f\n", rm_vec3f_dot(cam_dir, obj_dir));
 		mesh_draw(cube_mesh, crate_texture);
 
 		shader_bind(fbo_shader);

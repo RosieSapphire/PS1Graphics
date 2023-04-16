@@ -21,6 +21,8 @@ void main()
 
 	gl_Position = mvp * vertex_pos;
 	gl_Position.xyz = floor(gl_Position.xyz * jitter) / jitter;
+
+	// affine mapping
 	gl_Position /= gl_Position.w;
 
 	vec3 frag_pos = vec3(u_model * vertex_pos);
