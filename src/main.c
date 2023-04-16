@@ -51,7 +51,7 @@ int main(void)
 	int height_loc = shader_get_loc(fbo_shader, "u_height");
 
 	rm_mat4 projection;
-	struct camera cam = {{0, 1, 2}, RM_PI * 0.5f, 0};
+	struct camera cam = {{0, 0, 2}, RM_PI * 0.5f, 0};
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 0.1f, 50, projection);
 
@@ -90,12 +90,12 @@ int main(void)
 
 		rm_vec3f cam_dir, obj_dir;
 
-		// camera_get_look_dir(cam, cam_dir);
-		// rm_vec3f_sub(RM_VEC3F_ZERO, cam.eye_pos, obj_dir);
-		// rm_vec3f_normalize(obj_dir);
+		camera_get_look_dir(cam, cam_dir);
+		rm_vec3f_sub(RM_VEC3F_ZERO, cam.eye_pos, obj_dir);
+		rm_vec3f_normalize(obj_dir);
 
-		printf("%f\n", rm_vec3f_dot(cam_dir, obj_dir));
-		mesh_draw(cube_mesh, crate_texture);
+		if(rm_vec3f_dot(cam_dir, obj_dir) < -0.5f)
+			mesh_draw(cube_mesh, crate_texture);
 
 		shader_bind(fbo_shader);
 		shader_uni_int(width_loc, T_WIDTH);
