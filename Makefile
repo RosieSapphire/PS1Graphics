@@ -1,7 +1,9 @@
 CC=cc
 CFLAGS=-Wall -Wextra -Og -g3
-INC=-Iinclude -Ideps/rmath/include
-LIB=$(shell pkg-config --libs glfw3) -lm -Ldeps/rmath -lrmath
+INC=-Iinclude -Ideps/rmath/include -Ideps/assimp/include \
+    -Ideps/assimp/build/include
+LIB=$(shell pkg-config --libs glfw3) -lm -Ldeps/rmath -lrmath \
+    -Ldeps/assimp/build/bin -lassimp
 SRC=$(wildcard src/*.c)
 OBJ=$(patsubst src/%.c, %.o, $(SRC))
 BIN=ps1_graphics
@@ -9,17 +11,13 @@ BIN=ps1_graphics
 default: $(BIN)
 
 $(BIN): $(OBJ)
-	@echo Building Ruby Math library...
-	@make -C deps/rmath/
-	@echo Linking "'"$(BIN)"'"executable...
-	@$(CC) $(CFLAGS) $^ -o $@ $(INC) $(LIB)
-	@echo Deleting object files...
-	@rm -f *.o
+	make -C deps/rmath/
+	$(CC) $(CFLAGS) $^ -o $@ $(INC) $(LIB)
+	rm -f *.o
 	@echo Success!
 
 %.o: src/%.c
-	@echo Compiling "'"$^"'"...
-	@$(CC) $(CFLAGS) -c $^ $(INC)
+	$(CC) $(CFLAGS) -c $^ $(INC)
 
 clean:
 	@rm -f $(BIN) $(OBJ)
