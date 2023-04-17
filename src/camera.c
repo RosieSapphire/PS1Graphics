@@ -39,14 +39,14 @@ void camera_get_view_mat4(struct camera c, rm_mat4 out)
 
 void camera_update_position(struct camera *c, GLFWwindow *win, float dt)
 {
-	float move_speed = 2 * dt;
+	float move_speed = RM_PI * dt;
 
 	if(glfwGetKey(win, GLFW_KEY_LEFT_SHIFT)) {
 		move_speed *= 2;
 	}
 
 	float turn_amount = (glfwGetKey(win, GLFW_KEY_D) -
-			glfwGetKey(win, GLFW_KEY_A)) * dt * 2;
+			glfwGetKey(win, GLFW_KEY_A)) * dt * RM_PI * 0.5f;
 	float forward_move = (glfwGetKey(win, GLFW_KEY_S) -
 			glfwGetKey(win, GLFW_KEY_W));
 	float right_move = (glfwGetKey(win, GLFW_KEY_Q) -
