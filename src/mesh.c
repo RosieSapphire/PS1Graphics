@@ -3,6 +3,9 @@
 #include <string.h>
 
 #include <rmath/vec4f.h>
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include "camera.h"
 #include "mesh.h"
@@ -78,41 +81,20 @@ static GLuint mesh_quad_indis[6] = {
 	2, 1, 3
 };
 
-struct mesh *mesh_create_type(enum mesh_type type)
+struct mesh *mesh_create_data(struct vertex *verts, GLuint *indis,
+		int num_verts, int num_indis)
 {
 	struct mesh *m = malloc(sizeof(*m));
 
-	struct vertex *type_verts[MESH_TYPE_COUNT] = {
-		mesh_cube_verts,
-		mesh_quad_verts
-	};
-
-	GLuint *type_indis[MESH_TYPE_COUNT] = {
-		mesh_cube_indis,
-		mesh_quad_indis
-	};
-
-	size_t type_verts_sizes[MESH_TYPE_COUNT] = {
-		sizeof(mesh_cube_verts),
-		sizeof(mesh_quad_verts),
-	};
-
-	size_t type_indis_sizes[MESH_TYPE_COUNT] = {
-		sizeof(mesh_cube_indis),
-		sizeof(mesh_quad_indis),
-	};
-
-	int verts_size = type_verts_sizes[type];
-	int indis_size = type_indis_sizes[type];
-	int num_verts = verts_size / sizeof(struct vertex);
-	int num_indis = indis_size / sizeof(GLuint);
+	int verts_size = sizeof(struct vertex) * num_verts;
+	int indis_size = sizeof(GLuint) * num_indis;
 
 	m->num_verts = num_verts;
 	m->num_indis = num_indis;
 	m->verts = malloc(verts_size);
 	m->indis = malloc(indis_size);
-	memcpy(m->verts, type_verts[type], verts_size);
-	memcpy(m->indis, type_indis[type], indis_size);
+	memcpy(m->verts, verts, verts_size);
+	memcpy(m->indis, indis, indis_size);
 
 	glGenVertexArrays(1, &m->vao);
 	glBindVertexArray(m->vao);
@@ -139,6 +121,90 @@ struct mesh *mesh_create_type(enum mesh_type type)
 	glBindVertexArray(0);
 
 	return m;
+}
+
+struct mesh *mesh_create_file(const char *path)
+{
+	const struct aiScene *scene =
+		aiImportFile(path, aiProcess_JoinIdenticalVertices |
+				aiProcess_ImproveCacheLocality |
+				aiProcess_Triangulate);
+
+	if(!scene) {
+		printf("Failed to load model from %s.\n", path);
+		return NULL;
+	}
+
+	const struct aiMesh *ai_mesh = *scene->mMeshes;
+	int num_verts = ai_mesh->mNumVertices;
+	int num_faces = ai_mesh->mNumFaces;
+	int num_indis = num_faces * 3;
+	struct vertex *verts = malloc(num_verts * sizeof(struct vertex));
+	GLuint *indis = malloc(num_indis * sizeof(GLuint));
+
+	for(int i = 0; i < num_verts; i++) {
+		const struct aiVector3D ai_pos = ai_mesh->mVertices[i];
+		const struct aiVector3D ai_uv = ai_mesh->mTextureCoords[0][i];
+		const struct aiVector3D ai_norm = ai_mesh->mNormals[i];
+
+		verts[i].pos[0] = ai_pos.x;
+		verts[i].pos[1] = ai_pos.y;
+		verts[i].pos[2] = ai_pos.z;
+		verts[i].uv[0] = ai_uv.x;
+		verts[i].uv[1] = ai_uv.y;
+		verts[i].norm[0] = ai_norm.x;
+		verts[i].norm[1] = ai_norm.y;
+		verts[i].norm[2] = ai_norm.z;
+	}
+
+	int indis_counted = 0;
+
+	for(int i = 0; i < num_faces; i++) {
+		const struct aiFace face = ai_mesh->mFaces[i];
+			
+		for(unsigned int j = 0; j < face.mNumIndices; j++) {
+			indis[indis_counted++] = face.mIndices[j];
+		}
+	}
+
+	struct mesh *mesh = mesh_create_data(verts, indis,
+			num_verts, num_indis);
+
+	free(verts);
+	free(indis);
+
+	return mesh;
+}
+
+struct mesh *mesh_create_type(enum mesh_type type)
+{
+	struct vertex *type_verts[MESH_TYPE_COUNT] = {
+		mesh_cube_verts,
+		mesh_quad_verts
+	};
+
+	GLuint *type_indis[MESH_TYPE_COUNT] = {
+		mesh_cube_indis,
+		mesh_quad_indis
+	};
+
+	size_t type_verts_sizes[MESH_TYPE_COUNT] = {
+		sizeof(mesh_cube_verts),
+		sizeof(mesh_quad_verts),
+	};
+
+	size_t type_indis_sizes[MESH_TYPE_COUNT] = {
+		sizeof(mesh_cube_indis),
+		sizeof(mesh_quad_indis),
+	};
+
+	int verts_size = type_verts_sizes[type];
+	int indis_size = type_indis_sizes[type];
+	int num_verts = verts_size / sizeof(struct vertex);
+	int num_indis = indis_size / sizeof(GLuint);
+
+	return mesh_create_data(type_verts[type], type_indis[type],
+			num_verts, num_indis);
 }
 
 void mesh_draw(struct mesh *m, struct camera *c, GLuint texture)

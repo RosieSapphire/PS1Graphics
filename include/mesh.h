@@ -25,6 +25,9 @@ enum mesh_type {
 	MESH_TYPE_COUNT
 };
 
+struct mesh *mesh_create_data(struct vertex *verts, GLuint *indis,
+		int num_verts, int num_indis);
+struct mesh *mesh_create_file(const char *path);
 struct mesh *mesh_create_type(enum mesh_type type);
 void mesh_draw(struct mesh *m, struct camera *c, GLuint texture);
 void mesh_destroy(struct mesh *m);
