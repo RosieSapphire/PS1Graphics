@@ -87,15 +87,7 @@ int main(void)
 		shader_uni_mat4(view_loc, view);
 		shader_uni_mat4(projection_loc, projection);
 		shader_uni_vec3f(view_pos_loc, cam.eye_pos);
-
-		rm_vec3f cam_dir, obj_dir;
-
-		camera_get_look_dir(cam, cam_dir);
-		rm_vec3f_sub(RM_VEC3F_ZERO, cam.eye_pos, obj_dir);
-		rm_vec3f_normalize(obj_dir);
-
-		if(rm_vec3f_dot(cam_dir, obj_dir) < -0.5f)
-			mesh_draw(cube_mesh, crate_texture);
+		mesh_draw(cube_mesh, &cam, crate_texture);
 
 		shader_bind(fbo_shader);
 		shader_uni_int(width_loc, T_WIDTH);
