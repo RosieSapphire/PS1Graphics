@@ -1,11 +1,11 @@
-#include "render_layer.h"
-#include "mesh.h"
-#include "texture.h"
-
 #include <glad/gl.h>
 #include <stddef.h>
 #include <rmath/vec4f.h>
 #include <malloc.h>
+
+#include "render_layer.h"
+#include "mesh.h"
+#include "texture.h"
 
 struct render_layer *render_layer_create(int width, int height)
 {
@@ -48,7 +48,7 @@ void render_layer_draw(const struct render_layer *l,
 			dst_width, dst_height, GL_COLOR_BUFFER_BIT,
 			GL_NEAREST);
 	glDisable(GL_DEPTH_TEST);
-	mesh_draw(l->quad_mesh, l->tex);
+	mesh_draw(l->quad_mesh, NULL, l->tex);
 }
 
 void render_layer_bind_and_clear(const struct render_layer *l,
