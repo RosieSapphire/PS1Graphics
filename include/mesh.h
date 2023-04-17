@@ -4,6 +4,8 @@
 #include <rmath/vec3f.h>
 #include <rmath/vec2f.h>
 
+#include "camera.h"
+
 struct vertex {
 	rm_vec3f pos;
 	rm_vec2f uv;
@@ -24,7 +26,7 @@ enum mesh_type {
 };
 
 struct mesh *mesh_create_type(enum mesh_type type);
-void mesh_draw(struct mesh *m, unsigned int texture);
+void mesh_draw(struct mesh *m, struct camera *c, GLuint texture);
 void mesh_destroy(struct mesh *m);
 
 #endif

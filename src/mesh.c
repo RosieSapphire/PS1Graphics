@@ -4,7 +4,9 @@
 
 #include <rmath/vec4f.h>
 
+#include "camera.h"
 #include "mesh.h"
+#include "rmath/vec3f.h"
 
 static struct vertex mesh_cube_verts[] = {
 	/* front */
@@ -139,8 +141,24 @@ struct mesh *mesh_create_type(enum mesh_type type)
 	return m;
 }
 
-void mesh_draw(struct mesh *m, GLuint texture)
+void mesh_draw(struct mesh *m, struct camera *c, GLuint texture)
 {
+	rm_vec3f cam_dir, mesh_dir;
+
+	if(c) {
+		camera_get_forward_vec(*c, cam_dir);
+
+		/*
+		 * TODO: The zero is here as a place holder.
+		 * Take in the mesh's position to calculate culling.
+		 */
+		rm_vec3f_sub(RM_VEC3F_ZERO, c->eye_pos, mesh_dir);
+		rm_vec3f_normalize(mesh_dir);
+
+		if(rm_vec3f_dot(cam_dir, mesh_dir) > -0.35f)
+			return;
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glBindVertexArray(m->vao);
