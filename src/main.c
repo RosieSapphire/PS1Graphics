@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 
+#include "mesh.h"
 #include "render_layer.h"
 #include "rmath/vec3f.h"
 #include "shader.h"
@@ -55,15 +56,14 @@ int main(void)
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 0.1f, 50, projection);
 
-	struct mesh *test_mesh = mesh_create_file("models/icosphere.glb");
+	struct mesh *test_mesh = mesh_create_file("models/subdiv_cube.glb");
 	GLuint crate_texture = texture_load("textures/test3.png");
 
 	float time_last = glfwGetTime();
-	float rotation = 0.0f;
 
 	while(!glfwWindowShouldClose(window)) {
 		float time_now, time_delta;
-		rm_mat4 model = RM_MAT4_IDENTITY_INIT;
+		rm_mat4 model;
 		rm_mat4 view;
 
 		camera_get_view_mat4(cam, view);
@@ -73,16 +73,15 @@ int main(void)
 			time_delta = time_now - time_last;
 		} while(time_delta < 1.0f / TARGET_FRAMERATE);
 
-		camera_update_position(&cam, window, time_delta);
-
 		time_last = time_now;
 
-		rotation += time_delta;
-		rm_mat4_rotate_y(model, rotation);
+		camera_update_position(&cam, window, time_delta);
+		test_mesh->rot[1] += time_delta;
 
 		render_layer_bind_and_clear(layer, 0.05f, 0.1f, 0.2f, 1.0f);
 
 		shader_bind(cube_shader);
+		mesh_get_model_mat4(*test_mesh, model);
 		shader_uni_mat4(model_loc, model);
 		shader_uni_mat4(view_loc, view);
 		shader_uni_mat4(projection_loc, projection);

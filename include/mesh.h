@@ -17,6 +17,7 @@ struct mesh {
 	struct vertex *verts;
 	unsigned int *indis;
 	unsigned int vao, vbo, ebo;
+	rm_vec3f pos, rot;
 };
 
 enum mesh_type {
@@ -29,6 +30,7 @@ struct mesh *mesh_create_data(struct vertex *verts, GLuint *indis,
 		int num_verts, int num_indis);
 struct mesh *mesh_create_file(const char *path);
 struct mesh *mesh_create_type(enum mesh_type type);
+void mesh_get_model_mat4(struct mesh m, rm_mat4 out);
 void mesh_draw(struct mesh *m, struct camera *c, GLuint texture);
 void mesh_destroy(struct mesh *m);
 

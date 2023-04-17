@@ -9,6 +9,7 @@
 
 #include "camera.h"
 #include "mesh.h"
+#include "rmath/mat4.h"
 #include "rmath/vec3f.h"
 
 static struct vertex mesh_cube_verts[] = {
@@ -93,6 +94,8 @@ struct mesh *mesh_create_data(struct vertex *verts, GLuint *indis,
 	m->num_indis = num_indis;
 	m->verts = malloc(verts_size);
 	m->indis = malloc(indis_size);
+	rm_vec3f_copy(RM_VEC3F_ZERO, m->pos);
+	rm_vec3f_copy(RM_VEC3F_ZERO, m->rot);
 	memcpy(m->verts, verts, verts_size);
 	memcpy(m->indis, indis, indis_size);
 
@@ -207,18 +210,22 @@ struct mesh *mesh_create_type(enum mesh_type type)
 			num_verts, num_indis);
 }
 
+void mesh_get_model_mat4(struct mesh m, rm_mat4 out)
+{
+	rm_mat4_identity(out);
+	rm_mat4_rotate_x(out, m.rot[0]);
+	rm_mat4_rotate_y(out, m.rot[1]);
+	rm_mat4_rotate_z(out, m.rot[2]);
+	rm_mat4_translate(out, m.pos);
+}
+
 void mesh_draw(struct mesh *m, struct camera *c, GLuint texture)
 {
 	rm_vec3f cam_dir, mesh_dir;
 
 	if(c) {
 		camera_get_forward_vec(*c, cam_dir);
-
-		/*
-		 * TODO: The zero is here as a place holder.
-		 * Take in the mesh's position to calculate culling.
-		 */
-		rm_vec3f_sub(RM_VEC3F_ZERO, c->eye_pos, mesh_dir);
+		rm_vec3f_sub(m->pos, c->eye_pos, mesh_dir);
 		rm_vec3f_normalize(mesh_dir);
 
 		if(rm_vec3f_dot(cam_dir, mesh_dir) > -0.35f)
