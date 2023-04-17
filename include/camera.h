@@ -10,7 +10,8 @@ struct camera {
 };
 
 void camera_get_look_pos(struct camera c, rm_vec3f out);
-void camera_get_look_dir(struct camera c, rm_vec3f out);
+void camera_get_forward_vec(struct camera c, rm_vec3f out);
+void camera_get_right_vec(struct camera c, rm_vec3f out);
 void camera_get_view_mat4(struct camera c, rm_mat4 out);
 void camera_update_position(struct camera *c, GLFWwindow *win, float dt);
 
