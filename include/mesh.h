@@ -10,6 +10,7 @@ struct vertex {
 	rm_vec3f pos;
 	rm_vec2f uv;
 	rm_vec3f norm;
+	rm_vec3f col;
 };
 
 struct mesh {

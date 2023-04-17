@@ -7,6 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "assimp/material.h"
 #include "camera.h"
 #include "mesh.h"
 #include "rmath/mat4.h"
@@ -14,40 +15,64 @@
 
 static struct vertex mesh_cube_verts[] = {
 	/* front */
-	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, { 0.0f,  0.0f,  1.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, { 0.0f,  0.0f,  1.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f}, { 0.0f,  0.0f,  1.0f}},
-	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, { 0.0f,  0.0f,  1.0f}},
+	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f},
+		{ 0.0f,  0.0f,  1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f},
+		{ 0.0f,  0.0f,  1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f},
+		{ 0.0f,  0.0f,  1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f},
+		{ 0.0f,  0.0f,  1.0f}, {1.0f, 1.0f, 1.0f}},
 
 	/* left */
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {-1.0f,  0.0f,  0.0f}},
-	{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, {-1.0f,  0.0f,  0.0f}},
-	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, {-1.0f,  0.0f,  0.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, {-1.0f,  0.0f,  0.0f}},
+	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f},
+		{-1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f},
+		{-1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f},
+		{-1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f},
+		{-1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
 
 	/* right */
-	{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, { 1.0f,  0.0f,  0.0f}},
-	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f}, { 1.0f,  0.0f,  0.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, { 1.0f,  0.0f,  0.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, { 1.0f,  0.0f,  0.0f}},
+	{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f},
+		{ 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f},
+		{ 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f},
+		{ 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f},
+		{ 1.0f,  0.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
 
 	/* back */
-	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, { 0.0f,  0.0f, -1.0f}},
-	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, { 0.0f,  0.0f, -1.0f}},
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, { 0.0f,  0.0f, -1.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}, { 0.0f,  0.0f, -1.0f}},
+	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f},
+		{ 0.0f,  0.0f, -1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f},
+		{ 0.0f,  0.0f, -1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f},
+		{ 0.0f,  0.0f, -1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f},
+		{ 0.0f,  0.0f, -1.0f}, {1.0f, 1.0f, 1.0f}},
 
 	/* bottom */
-	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f}, { 0.0f, -1.0f,  0.0f}},
-	{{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, { 0.0f, -1.0f,  0.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f}, { 0.0f, -1.0f,  0.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f}, { 0.0f, -1.0f,  0.0f}},
+	{{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f},
+		{ 0.0f, -1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f},
+		{ 0.0f, -1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f},
+		{ 0.0f, -1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f},
+		{ 0.0f, -1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
 
 	/* top */
-	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f}, { 0.0f,  1.0f,  0.0f}},
-	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f}, { 0.0f,  1.0f,  0.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f}, { 0.0f,  1.0f,  0.0f}},
-	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f}, { 0.0f,  1.0f,  0.0f}},
+	{{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f},
+		{ 0.0f,  1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f},
+		{ 0.0f,  1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f},
+		{ 0.0f,  1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f},
+		{ 0.0f,  1.0f,  0.0f}, {1.0f, 1.0f, 1.0f}},
 };
 
 static GLuint mesh_cube_indis[] = {
@@ -71,10 +96,14 @@ static GLuint mesh_cube_indis[] = {
 };
 
 static struct vertex mesh_quad_verts[] = {
-	{{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-	{{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-	{{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	{{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	{{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f},
+		{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f},
+		{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f},
+		{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}},
+	{{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f},
+		{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}},
 };
 
 static GLuint mesh_quad_indis[6] = {
@@ -108,12 +137,15 @@ struct mesh *mesh_create_data(struct vertex *verts, GLuint *indis,
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(*m->verts),
 			(void *)offsetof(struct vertex, pos));
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(*m->verts),
 			(void *)offsetof(struct vertex, uv));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(*m->verts),
 			(void *)offsetof(struct vertex, norm));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(*m->verts),
+			(void *)offsetof(struct vertex, col));
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &m->ebo);
@@ -145,6 +177,15 @@ struct mesh *mesh_create_file(const char *path)
 	struct vertex *verts = malloc(num_verts * sizeof(struct vertex));
 	GLuint *indis = malloc(num_indis * sizeof(GLuint));
 
+	int num_mats = scene->mNumMaterials;
+	printf("Scene Mats: %d\n", num_mats);
+	
+	const struct aiMaterial *mat =
+		scene->mMaterials[ai_mesh->mMaterialIndex];
+	struct aiColor4D ai_col;
+
+	aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &ai_col);
+
 	for(int i = 0; i < num_verts; i++) {
 		const struct aiVector3D ai_pos = ai_mesh->mVertices[i];
 		const struct aiVector3D ai_uv = ai_mesh->mTextureCoords[0][i];
@@ -158,6 +199,9 @@ struct mesh *mesh_create_file(const char *path)
 		verts[i].norm[0] = ai_norm.x;
 		verts[i].norm[1] = ai_norm.y;
 		verts[i].norm[2] = ai_norm.z;
+		verts[i].col[0] = ai_col.r;
+		verts[i].col[1] = ai_col.g;
+		verts[i].col[2] = ai_col.b;
 	}
 
 	int indis_counted = 0;
