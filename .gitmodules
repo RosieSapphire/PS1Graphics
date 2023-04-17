@@ -1,3 +1,6 @@
 [submodule "deps/rmath"]
 	path = deps/rmath
 	url = https://github.com/RosieSapphire/RubyMath.git
+[submodule "deps/assimp"]
+	path = deps/assimp
+	url = https://github.com/assimp/assimp.git
