@@ -55,7 +55,7 @@ int main(void)
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 0.1f, 50, projection);
 
-	struct mesh *cube_mesh = mesh_create_type(MESH_CUBE);
+	struct mesh *test_mesh = mesh_create_file("models/icosphere.glb");
 	GLuint crate_texture = texture_load("textures/test3.png");
 
 	float time_last = glfwGetTime();
@@ -87,7 +87,7 @@ int main(void)
 		shader_uni_mat4(view_loc, view);
 		shader_uni_mat4(projection_loc, projection);
 		shader_uni_vec3f(view_pos_loc, cam.eye_pos);
-		mesh_draw(cube_mesh, &cam, crate_texture);
+		mesh_draw(test_mesh, &cam, crate_texture);
 
 		shader_bind(fbo_shader);
 		shader_uni_int(width_loc, T_WIDTH);
@@ -101,7 +101,7 @@ int main(void)
 	glDeleteProgram(fbo_shader);
 	glDeleteProgram(cube_shader);
 	glDeleteTextures(1, &crate_texture);
-	mesh_destroy(cube_mesh);
+	mesh_destroy(test_mesh);
 	render_layer_destroy(layer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
