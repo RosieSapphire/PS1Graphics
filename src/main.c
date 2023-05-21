@@ -56,8 +56,9 @@ int main(void)
 
 	rm_mat4_perspective(70.0f, ASPECT_RATIO, 0.1f, 50, projection);
 
-	struct mesh *test_mesh = mesh_create_file("models/subdiv_cube.glb");
-	GLuint crate_texture = texture_load("textures/test3.png");
+	// struct mesh *test_mesh = mesh_create_file("models/subdiv_cube.glb");
+	struct mesh *test_mesh = mesh_create_type(MESH_CUBE);
+	GLuint crate_texture = texture_load("textures/test.png");
 
 	float time_last = glfwGetTime();
 
